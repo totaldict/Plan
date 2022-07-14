@@ -7,7 +7,7 @@ import { blockWidth, deltaMove, numberBlocksInHeight, numberBlocksInWidth, stage
 import { colorType, iconColorMap, keys, markerColorMap, objectType, textColorMap } from '../../containers/plan/interfaces/enums';
 import colors from '../../styles/colors';
 import { isEven } from '../../containers/plan/core/utils';
-import { IObject, IPlanProps } from '../../containers/plan/interfaces/object';
+import { IComponentPlanProps, IObject, IPlanProps } from '../../containers/plan/interfaces/object';
 import useImage from 'use-image';
 import { Image } from "react-konva";
 import Violation from '../../assets/icons/Violation.svg';
@@ -19,8 +19,8 @@ const textPaddingH = 5;
 const textPaddingV = 3;
 const combineMarkerRadius = 16;
 
-export const useMainStage = (props: IPlanProps) => {
-  const { planId, colorMarkers, planName, planUrl} = props;
+export const useMainStage = (props: IComponentPlanProps) => {
+  const { planId, colorMarkers, planName, planUrl, container } = props;
   const [image] = useImage('/icons/Violation.svg', "anonymous");
   // console.log('image', image)
   
@@ -189,17 +189,27 @@ export const useMainStage = (props: IPlanProps) => {
       group.add(arc);
     })
 
-
+    //TODO Попробовать сделать так же, рендерим менюху в document, а потом просто меняем координату https://konvajs.org/docs/sandbox/Canvas_Context_Menu.html
+    // group.on('mouseover', () => {
+    //   group.getChildren((item) => item.id() === idPlate)[0].setAttr('fill', iconColorMap[color]);
+    //   group.getChildren((item) => item.id() === idPlateText)[0].setAttr('fill', colors.white);
+    // });
+    // group.on('mouseout', () => {
+    //   group.getChildren((item) => item.id() === idPlate)[0].setAttr('fill', colors.white);
+    //   group.getChildren((item) => item.id() === idPlateText)[0].setAttr('fill', textColor);
+    // });
     return group;
   }
 
   const createMainStage = () => {
     const devicePixelRatio = window.devicePixelRatio;
     console.log('devicePixelRatio', devicePixelRatio)
-
+    if (!container) {
+      return;
+    }
     const instance = new PlanInstance(props);
     const { layerPlan, layerMarkers, stage, objects = [] } = instance;
-    
+
     Konva.Image.fromURL('/mock/plan-1.jpg', (imageNode: Konva.Image) => {
       imageNode.setAttrs({
         scaleX: 1,
@@ -216,7 +226,7 @@ export const useMainStage = (props: IPlanProps) => {
 
     
 
-    console.log('layer', layerMarkers)
+    // console.log('layer', layerMarkers)
     stage.add(layerPlan);
     stage.add(layerMarkers);
     PlanInstance.setStage(stage);

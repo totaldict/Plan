@@ -3,7 +3,11 @@ import { Layer } from 'konva/lib/Layer';
 import { Stage } from 'konva/lib/Stage';
 import { colorType, objectType } from './enums';
 
-export interface IPlanInstance {
+interface IPlanContainer {
+  container?: HTMLDivElement;
+}
+
+export interface IPlanInstance extends IPlanContainer, Size {
   stage: Stage;
   layerPlan: Layer;
   layerMarkers: Layer;
@@ -58,3 +62,10 @@ export interface IRawPlanProps extends IMarkers, ICommonPlanProps {};
 export interface IPlanProps extends ICommonPlanProps {
   colorMarkers: IColorMarker[];
 };
+
+export interface Size {
+  width?: number;
+  height?: number;
+}
+
+export interface IComponentPlanProps extends IPlanProps, Partial<Size>, Partial<IPlanContainer> {};

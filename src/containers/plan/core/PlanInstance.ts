@@ -2,21 +2,31 @@ import Konva from "konva";
 import { Layer } from "konva/lib/Layer";
 import { Stage } from "konva/lib/Stage";
 import { objectType } from "../interfaces/enums";
-import { IPlanInstance, IObject, IPlanProps, IPieceMarker } from "../interfaces/object";
+import { IPlanInstance, IObject, IPlanProps, IPieceMarker, IComponentPlanProps, Size } from "../interfaces/object";
 import { compareByColor } from "./utils";
 
 //TODO вынести в константы. Точность объединения рядом стоящих маркеров
 const accuracy = 45;
 
 class PlanInstance {
+  container?: HTMLDivElement;
+  stage: Stage;
+  layerPlan: Layer;
+  layerMarkers: Layer;
+  objects: IObject[] = [];
+  width?: number;
+  height?: number;
+
   private static instance: IPlanInstance;
-  constructor(props: IPlanProps) {
+  constructor(props: IComponentPlanProps) {
     if (PlanInstance.instance) {
       return PlanInstance.instance;
     }
-    const { planId, colorMarkers = [] } = props;
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const { container, planId, colorMarkers = [] } = props;
+    this.container = container;
+    
+    const width = container?.clientWidth || window.innerWidth;
+    const height = container?.clientHeight || window.innerHeight;
 
     this.stage = new Konva.Stage({
       container: 'root',
@@ -91,11 +101,6 @@ class PlanInstance {
     return PlanInstance.instance;
   }
 
-  stage: Stage;
-  layerPlan: Layer;
-  layerMarkers: Layer;
-  objects: IObject[] = [];
-
   // static staticMethod() {
   //   return 'staticMethod';
   // }
@@ -106,6 +111,15 @@ class PlanInstance {
 
   static setStage(value: Stage) {
     this.instance.stage = value;
+  }
+
+  //TODO хз, мож пригодится. Если нет - то выпилить из интерфейсов ширину/высоту.
+  static setSize(size: Size) {
+    if (!size?.height || !size?.width) {
+      return;
+    }
+    this.instance.width = size.width;
+    this.instance.height = size.height;
   }
 
   // get layer() {
