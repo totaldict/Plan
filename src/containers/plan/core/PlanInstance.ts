@@ -2,11 +2,12 @@ import Konva from "konva";
 import { Layer } from "konva/lib/Layer";
 import { Stage } from "konva/lib/Stage";
 import { objectType } from "../interfaces/enums";
-import { IPlanInstance, IObject, IPlanProps, IPieceMarker, IComponentPlanProps, Size } from "../interfaces/object";
-import { compareByColor } from "./utils";
+import { IPlanInstance, IObject, IPieceMarker, IComponentPlanProps, ICoords } from "../interfaces/object";
+import { compareByColor, getMarkersCoords, getScale } from "./utils";
 
 //TODO вынести в константы. Точность объединения рядом стоящих маркеров
 const accuracy = 45;
+const panelHeight = 28 + 16 * 2;
 
 class PlanInstance {
   container?: HTMLDivElement;
@@ -16,6 +17,8 @@ class PlanInstance {
   objects: IObject[] = [];
   width?: number;
   height?: number;
+  scale = 1;
+  offset: ICoords;
 
   private static instance: IPlanInstance;
   constructor(props: IComponentPlanProps) {
@@ -25,16 +28,14 @@ class PlanInstance {
     const { container, planId, colorMarkers = [] } = props;
     this.container = container;
     
-    const width = container?.clientWidth || window.innerWidth;
-    const height = container?.clientHeight || window.innerHeight;
+    this.width = container?.clientWidth || window.innerWidth;
+    this.height = container?.clientHeight || window.innerHeight - panelHeight;
 
     this.stage = new Konva.Stage({
-      container: 'root',
-      width: width,
-      height: height,
+      container: container as HTMLDivElement,
+      width: this.width,
+      height: this.height,
     });
-    this.layerPlan = new Konva.Layer({ id: `${planId}_plan` });
-    this.layerMarkers = new Konva.Layer({ id: `${planId}_markers` });
 
     let index = 0;
     const allObjects: IObject[] = [];
@@ -53,6 +54,39 @@ class PlanInstance {
         allObjects.push(newObj);
       })
     })
+
+    const minMaxCoords = getMarkersCoords(allObjects);
+    // Предварительный расчёт масштаба
+    const tempScale = getScale(minMaxCoords, this.width, this.height);
+    // Добавочный отступ, чтобы влезали все маркеры
+    const fitOffset = accuracy / tempScale;
+    minMaxCoords.minCoord.x -= fitOffset;
+    minMaxCoords.minCoord.y -= fitOffset;
+    // Уточненный рассчёт массштаба, включая отступы
+    this.scale = getScale(minMaxCoords, this.width, this.height);
+    const { x: minX, y: minY } = minMaxCoords.minCoord;
+    this.offset = {
+      x: minX,
+      y: minY,
+    }
+
+    // this.scale = 1;
+    // this.offset = {
+    //   x: 0,
+    //   y: 0,
+    // }
+
+    this.layerPlan = new Konva.Layer({
+      id: `${planId}_plan`,
+      offsetX: this.offset.x * this.scale,
+      offsetY: this.offset.y * this.scale,
+    });
+    this.layerMarkers = new Konva.Layer({
+      id: `${planId}_markers`,
+      offsetX: this.offset.x * this.scale,
+      offsetY: this.offset.y * this.scale,
+    });
+
     /** сюда складываем все маркеры + объединённые маркеры */
     const unitedMarkers: IObject[] = [];
     /** имена обновлённых маркеров */
@@ -67,9 +101,12 @@ class PlanInstance {
       // ищем соседей этого маркера
       const neighbours = allObjects.filter(({ coords, name}) => {
         const { x, y } = coords;
-        const deltaX = Math.abs(srcX - x);
-        const deltaY = Math.abs(srcY - y);
-        // возвращаем только те элементы, у которых координаты рядом с искомым
+        const deltaX = Math.abs(srcX - x) * this.scale;
+        const deltaY = Math.abs(srcY - y) * this.scale;
+        if (updatedMarkers.includes(name)) {
+          return false;
+        }
+        // возвращаем только те элементы, у которых координаты рядом с искомым, конечно учитывая отношение шкалы
         return deltaX < accuracy && deltaY < accuracy;
       })
 
@@ -111,15 +148,6 @@ class PlanInstance {
 
   static setStage(value: Stage) {
     this.instance.stage = value;
-  }
-
-  //TODO хз, мож пригодится. Если нет - то выпилить из интерфейсов ширину/высоту.
-  static setSize(size: Size) {
-    if (!size?.height || !size?.width) {
-      return;
-    }
-    this.instance.width = size.width;
-    this.instance.height = size.height;
   }
 
   // get layer() {

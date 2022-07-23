@@ -11,11 +11,14 @@ export const getInfo = (): IPlanProps[] => {
   let tempPlan: IPlanProps; 
   const colorTypeByIdx = Object.values(colorType);
   apiMock.forEach((item, idx) => {
-    // Если сменился ID, то добавляем план в коллекцию
-    if (item.planId !== currentId && idx !== 0) {
-      result.push(tempPlan);
-    };
     const { planId, markers, planName, planUrl } = item;
+    // Если сменился ID, то добавляем план в коллекцию
+    if (planId !== currentId && idx !== 0) {
+      result.push({ ...tempPlan });
+      tempPlan.colorMarkers = [];
+    };
+    
+    currentId = planId;
     const color = colorTypeByIdx[colorTypeByIdx.length > idx ? idx : 0];
     const colorMarker: IColorMarker = {
       color,

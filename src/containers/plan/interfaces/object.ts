@@ -13,6 +13,9 @@ export interface IPlanInstance extends IPlanContainer, Size {
   layerMarkers: Layer;
   objects: IObject[];
   openCoord?: IOpenCoord;
+  scale: number;
+  /** Смещение координат, чтобы влезли все маркеры */
+  offset: ICoords;
 };
 
 export interface ICoords {
@@ -69,3 +72,9 @@ export interface Size {
 }
 
 export interface IComponentPlanProps extends IPlanProps, Partial<Size>, Partial<IPlanContainer> {};
+
+/** Максимальные и минимальные координаты маркеров */
+export interface IMinMaxCoords {
+  minCoord: ICoords;
+  maxCoord: ICoords;
+}

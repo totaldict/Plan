@@ -1,51 +1,55 @@
 import * as React from 'react';
 import Konva from 'konva';
-import { NodeConfig } from 'konva/lib/Node';
-import { RectConfig } from 'konva/lib/shapes/Rect';
+import { ImageConfig } from 'konva/lib/shapes/Image';
 import PlanInstance from '../../containers/plan/core/PlanInstance';
-import { blockWidth, deltaMove, numberBlocksInHeight, numberBlocksInWidth, stageBegin } from '../../containers/plan/interfaces/constants';
-import { colorType, iconColorMap, keys, markerColorMap, objectType, textColorMap } from '../../containers/plan/interfaces/enums';
+import { iconColorMap, markerColorMap, objectType, textColorMap } from '../../containers/plan/interfaces/enums';
 import colors from '../../styles/colors';
-import { isEven } from '../../containers/plan/core/utils';
-import { IComponentPlanProps, IObject, IPlanProps } from '../../containers/plan/interfaces/object';
-import useImage from 'use-image';
-import { Image } from "react-konva";
-import Violation from '../../assets/icons/Violation.svg';
+import { IComponentPlanProps, ICoords, IObject } from '../../containers/plan/interfaces/object';
 import fonts from '../../styles/fonts';
 import { getContext } from './utils';
+import { getViolationSvg, getInspectionSvg } from '../../assets/icons/svgSource';
 
 //TODO Вынести эти константы в дефолтные настройки
 const textPaddingH = 5;
 const textPaddingV = 3;
 const combineMarkerRadius = 16;
 
+const markerWithIcons = [objectType.Inspection, objectType.Violation];
+type WithIcons = objectType.Inspection | objectType.Violation;
+
+const getSvgFunc = {
+  [objectType.Inspection]: getInspectionSvg,
+  [objectType.Violation]: getViolationSvg,
+}
+
 export const useMainStage = (props: IComponentPlanProps) => {
   const { planId, colorMarkers, planName, planUrl, container } = props;
-  const [image] = useImage('/icons/Violation.svg', "anonymous");
-  // console.log('image', image)
-  
+  // console.log('container', container);
   // Получаем контекст для измерения текста
   const { family, fontStyle, size, lineHeight } = fonts;
   const context = getContext(fontStyle, size, family);
 
   /** Создаёт обычный маркер */
-  const createMarker = (marker: IObject, idx: number): Konva.Group => {
-    const { color, coords, name } = marker;
+  const createMarker = (marker: IObject, idx: number, scale: number): Konva.Group => {
+    const { color, coords, name, type } = marker;
     const { x, y } = coords;
+    const scaledX = x * scale;
+    const scaledY = y * scale;
     const idPlate = `${idx}_plate`;
     const idPlateText = `${idx}_plateText`;
     const idMarker = `${idx}_marker`;
 
     const markerColor = markerColorMap[color];
     const textColor = textColorMap[color];
+    const iconColor = iconColorMap[color];
     // Рисуем плашку с номером
     const measuredLength = context.measureText(name).width;
     const plateWidth = textPaddingH * 2 + measuredLength;
     const plate = new Konva.Rect({
       id: idPlate,
       cornerRadius: 2,
-      x: x - plateWidth / 2,
-      y: y - 40,
+      x: scaledX - plateWidth / 2,
+      y: scaledY - 40,
       height: 20,
       width: plateWidth,
       shadowBlur: 5,
@@ -55,8 +59,8 @@ export const useMainStage = (props: IComponentPlanProps) => {
     const plateText = new Konva.Text({
       id: idPlateText,
       text: name,
-      x: x - measuredLength / 2,
-      y: y - 40 + 1 + textPaddingV,
+      x: scaledX - measuredLength / 2,
+      y: scaledY - 40 + 1 + textPaddingV,
       width: measuredLength,
       height: lineHeight,
       // scaleX: scale,
@@ -75,8 +79,8 @@ export const useMainStage = (props: IComponentPlanProps) => {
     // Рисуем маркер
     const markerShape = new Konva.Shape({
     id: idMarker,
-      x: x,
-      y: y,
+      x: scaledX,
+      y: scaledY,
       fill: markerColor,
       stroke: '#FFFFFF',
       strokeWidth: 2,
@@ -97,32 +101,23 @@ export const useMainStage = (props: IComponentPlanProps) => {
     group.add(plateText)
     group.add(markerShape)
 
-
-    // var s = new XMLSerializer();
-    // var str = s.serializeToString(image);
-
-    // console.log('Violation', Violation)
-    // const parser = new DOMParser();
-    // const srcIcon = parser.parseFromString(Violation., "image/svg+xml");
-    // console.log('srcIcon', (Violation as React.SVGProps<{}>).path)
-
-    // Рисуем иконку
-    Konva.Image.fromURL('/icons/Violation.svg', (iconNode: Konva.Image) => { //TODO Брать из перечисления иконку
-      // iconNode.attrs.image.style.color = '#d40000';
-      iconNode.setAttrs({
-        x: x-10,
-        y: y-10,
-        scaleX: 1,
-        scaleY: 1,
-        colorKey: '#d40000',
-        currentColor: '#d40000',
-        color: '#d40000',
-        colors: ['#d40000', '#d40000'],
-        path: null
+    // // Рисуем иконку у маркера если она есть
+    if (markerWithIcons.includes(type)) {
+      const getSvg = getSvgFunc[type as WithIcons];
+      const iconSvg = getSvg(iconColor);
+      const iconUrl = 'data:image/svg+xml;base64,' + window.btoa(iconSvg);
+  
+      Konva.Image.fromURL(iconUrl, (iconNode: Konva.Image) => {
+        iconNode.setAttrs({
+          x: scaledX - 10,
+          y: scaledY - 10,
+          scaleX: 1,
+          scaleY: 1,
+        });
+        group.add(iconNode);
       });
-      group.add(iconNode);
-    });
-    // var path = new Konva.Path()
+    }
+    
     group.on('mouseover', () => {
       group.getChildren((item) => item.id() === idPlate)[0].setAttr('fill', iconColorMap[color]);
       group.getChildren((item) => item.id() === idPlateText)[0].setAttr('fill', colors.white);
@@ -135,14 +130,18 @@ export const useMainStage = (props: IComponentPlanProps) => {
   } 
   
   /** Создаёт комбинированный маркер */
-  const createCombineMarker = (marker: IObject, idx: number): Konva.Group => {
+  const createCombineMarker = (marker: IObject, idx: number, scale: number): Konva.Group => {
     const { coords, pieces } = marker;
     const { x, y } = coords;
+    const scaledX = x * scale;
+    const scaledY = y * scale;
+    // const scaledFontSize = size * scale;
+    // const scaledLineHeight = lineHeight * scale;
     const piecesCount = pieces?.length ?? 1;
     // Основной круг шейпа
     const circle = new Konva.Circle({
-      x,
-      y,
+      x: scaledX,
+      y: scaledY,
       fill: colors.white,
       id: `${idx}_circle`, //TODO везде проставить IDшники у всех фигур
       radius: combineMarkerRadius,
@@ -153,12 +152,10 @@ export const useMainStage = (props: IComponentPlanProps) => {
     const measuredLength = context.measureText(markerText).width;
     const plateText = new Konva.Text({
       text: markerText,
-      x: x - measuredLength / 2,
-      y: y - size / 2,
+      x: scaledX - measuredLength / 2,
+      y: scaledY - size / 2,
       width: measuredLength,
       height: lineHeight,
-      // scaleX: scale,
-      // scaleY: scale,
       align: 'center',
       verticalAlign: 'center',
       wrap: 'none',
@@ -177,8 +174,8 @@ export const useMainStage = (props: IComponentPlanProps) => {
     let deltaAngle = -90; // угол смещения сектора
     pieces?.forEach(({ color, name }) => {
       const arc = new Konva.Arc({
-        x,
-        y,
+        x: scaledX,
+        y: scaledY,
         innerRadius: 11,
         outerRadius: 14,
         fill: iconColorMap[color],
@@ -208,19 +205,20 @@ export const useMainStage = (props: IComponentPlanProps) => {
       return;
     }
     const instance = new PlanInstance(props);
-    const { layerPlan, layerMarkers, stage, objects = [] } = instance;
-
-    Konva.Image.fromURL('/mock/plan-1.jpg', (imageNode: Konva.Image) => {
-      imageNode.setAttrs({
-        scaleX: 1,
-        scaleY: 1,
-      });
+    const { layerPlan, layerMarkers, stage, objects = [], scale = 1 } = instance;
+    
+    Konva.Image.fromURL(`./mock${planUrl}`, (imageNode: Konva.Image) => {
+      const imageAttrs: Partial<ImageConfig> = {
+        scaleX: scale,
+        scaleY: scale,
+      }
+      imageNode.setAttrs(imageAttrs);
       layerPlan.add(imageNode);
     });
 
     objects.forEach((marker, idx) => {
       const { type } = marker;
-      const markerShape = type === objectType.CombineMarker ? createCombineMarker(marker, idx) : createMarker(marker, idx);
+      const markerShape = type === objectType.CombineMarker ? createCombineMarker(marker, idx, scale) : createMarker(marker, idx, scale);
       layerMarkers.add(markerShape);
     })
 

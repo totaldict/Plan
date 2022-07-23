@@ -1,33 +1,75 @@
-import Konva from 'konva';
 import * as React from 'react';
 import { useMainStage } from '../../components/main-stage/useMainStage';
-import { keys } from './interfaces/enums';
-import { IComponentPlanProps, ICoords, IPlanProps, Size } from './interfaces/object';
+import { IPlanProps } from './interfaces/object';
+import { ReactComponent as ArrowUp } from '../../assets/icons/arrow-up.svg';
 import './Plan.css';
 
 const planCls = 'plan';
+const pagesCls = `${planCls}-pages`;
 
-const Plan: React.FC<IPlanProps> = (props: React.PropsWithChildren<IPlanProps>): JSX.Element => {
-  const planDivRef = React.useRef<HTMLDivElement>(null);
-  React.useEffect(() => {
-    // if (!planDivRef?.current) {
-    //   return undefined;
-    // }
-    createMainStage();
-    // document.body.addEventListener('keydown', listener);
-  }, [planDivRef?.current])
+interface IProps {
+  plans: IPlanProps[];
+}
+
+const Plan: React.FC<IProps> = ({ plans }): JSX.Element => {
+  const [ currentPlanIdx, setCurrentPlanIdx ] = React.useState<number>(0);
+  const [ container, setContainer ] = React.useState<HTMLDivElement | undefined>();
+  const currentProps = plans[currentPlanIdx];
+  const numberOfPlans = plans?.length ?? 0;
+  const { planName } = currentProps;
+
+  const measuredRef = React.useCallback((node: HTMLDivElement) => {
+    if (node !== null) {
+      setContainer(node);
+    }
+  }, []);
+
   const { createMainStage } = useMainStage({
-    ...props,
-    container: planDivRef?.current as HTMLDivElement,
+    ...currentProps,
+    container: container,
   });
 
-  // console.log('props', props)
+  React.useEffect(() => {
+    createMainStage();
+    // document.body.addEventListener('keydown', listener);
+  }, [container, createMainStage, currentPlanIdx])
+
+  const handleNextPlan = React.useCallback(() => {
+    if (currentPlanIdx < numberOfPlans - 1) {
+      setCurrentPlanIdx(currentPlanIdx + 1);
+    }
+  }, [currentPlanIdx, numberOfPlans])
+ 
+  const handlePrevPlan = React.useCallback(() => {
+    if (currentPlanIdx > 0) {
+      setCurrentPlanIdx(currentPlanIdx - 1);
+    }
+  }, [currentPlanIdx]);
+
+  const count = React.useMemo(() => `${currentPlanIdx + 1}/${numberOfPlans}`, [currentPlanIdx, numberOfPlans]);
   // const listener = (event: KeyboardEvent) => {
   //   move(event?.key as keys);
   // }
+
   return (
     <div className={planCls}>
-      <div className="plan-canvas" tabIndex={-1} ref={planDivRef} />
+      <div className={`${planCls}-canvas`} tabIndex={-1} ref={measuredRef} />
+      <div className={pagesCls}>
+        <button className={`${pagesCls}_arrow-left`} onClick={handlePrevPlan}>
+          <ArrowUp className={`${pagesCls}_arrow-icon`} />
+        </button>
+        <div className={`${pagesCls}_current`}>
+          <div className={`${pagesCls}_name`}>
+            {planName}
+          </div>
+          <div className={`${pagesCls}_count`}>
+            {count}
+          </div>
+        </div>
+        <button className={`${pagesCls}_arrow-right`} onClick={handleNextPlan}>
+          <ArrowUp className={`${pagesCls}_arrow-icon`} />
+        </button>
+      </div>
     </div>
   );
 }

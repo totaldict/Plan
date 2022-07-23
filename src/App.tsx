@@ -11,10 +11,9 @@ function App() {
   // React.useEffect(() => {
   //   getInfo();
   // }, [])
-
   return (
     <div className="app">
-      <Plan { ...initProps[0] } />
+      <Plan plans={initProps} />
     </div>
   );
 }
