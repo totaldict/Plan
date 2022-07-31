@@ -57,3 +57,51 @@
 .plan-pages_arrow-icon {
   display: flex;
 }
+
+.popup-content {
+  border-radius: 5px;
+  padding: 0.5rem;
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #d7d7d7;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.popup-arrow {
+  color: #fff;
+  stroke-width: 2px;
+  stroke: #d7d7d7;
+  stroke-dasharray: 30px;
+  stroke-dashoffset: -54px;
+}
+
+.plan-popup {
+  opacity: 0;
+  position: absolute;
+  z-index: -2;
+  top: 100px;
+  left: 100px;
+	border-radius: 5px;
+  padding: 0.5rem;
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #d7d7d7;
+  box-shadow: 0 0 10px rgb(0 0 0 / 50%);
+}
+
+.plan-popup_piece {
+  display: flex;
+  flex-direction: row;
+  height: 32px;
+  align-items: center;
+}
+
+.plan-popup_name {
+  font-family: 'Open Sans, sans-serif';
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.plan-popup_icon {
+  margin-right: 12px;
+}

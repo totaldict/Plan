@@ -24,11 +24,11 @@ const Plan: React.FC<IProps> = ({ plans }): JSX.Element => {
     }
   }, []);
 
-  const { createMainStage } = useMainStage({
+  const { createMainStage, renderPopups } = useMainStage({
     ...currentProps,
     container: container,
   });
-
+  console.log('currentProps.colorMarkers', currentProps.colorMarkers);
   React.useEffect(() => {
     createMainStage();
     // document.body.addEventListener('keydown', listener);
@@ -51,6 +51,8 @@ const Plan: React.FC<IProps> = ({ plans }): JSX.Element => {
   //   move(event?.key as keys);
   // }
 
+  
+
   return (
     <div className={planCls}>
       <div className={`${planCls}-canvas`} tabIndex={-1} ref={measuredRef} />
@@ -70,6 +72,7 @@ const Plan: React.FC<IProps> = ({ plans }): JSX.Element => {
           <ArrowUp className={`${pagesCls}_arrow-icon`} />
         </button>
       </div>
+      {renderPopups()}
     </div>
   );
 }

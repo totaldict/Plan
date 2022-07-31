@@ -36,6 +36,16 @@ export const getMarkersCoords = (objects: IObject[]): IMinMaxCoords => {
   return { minCoord, maxCoord };
 }
 
+/** Получение крайних координат с учётом отступа по краям */
+export const getIndentCoords = (coords: IMinMaxCoords, indent: number): IMinMaxCoords => {
+  const { maxCoord, minCoord } = coords;
+  maxCoord.x = maxCoord.x + indent;
+  maxCoord.y = maxCoord.y + indent;
+  minCoord.x = minCoord.x - indent;
+  minCoord.y = minCoord.y - indent;
+  return { maxCoord, minCoord };
+}
+
 /**
  * Рассчитывает соотношение области окна к области, на которой присутствуют маркеры по координатам.
  * @param {IMinMaxCoords} coords Координаты мин/макс маркеров

@@ -3,11 +3,12 @@ import { Layer } from "konva/lib/Layer";
 import { Stage } from "konva/lib/Stage";
 import { objectType } from "../interfaces/enums";
 import { IPlanInstance, IObject, IPieceMarker, IComponentPlanProps, ICoords } from "../interfaces/object";
-import { compareByColor, getMarkersCoords, getScale } from "./utils";
+import { compareByColor, getIndentCoords, getMarkersCoords, getScale } from "./utils";
 
 //TODO вынести в константы. Точность объединения рядом стоящих маркеров
 const accuracy = 45;
 const panelHeight = 28 + 16 * 2;
+const indent = 75; //отступ по краям полотна для маркеров
 
 class PlanInstance {
   container?: HTMLDivElement;
@@ -19,15 +20,17 @@ class PlanInstance {
   height?: number;
   scale = 1;
   offset: ICoords;
+  planId: string;
 
   private static instance: IPlanInstance;
   constructor(props: IComponentPlanProps) {
-    if (PlanInstance.instance) {
+    if (PlanInstance.instance && PlanInstance.instance.planId === props.planId) {
       return PlanInstance.instance;
     }
     const { container, planId, colorMarkers = [] } = props;
     this.container = container;
-    
+    this.planId = planId;
+
     this.width = container?.clientWidth || window.innerWidth;
     this.height = container?.clientHeight || window.innerHeight - panelHeight;
 
@@ -48,6 +51,7 @@ class PlanInstance {
           },
           color,
           name: `№ ${index}`,
+          id: `id${index}`,
           type: objectType.Violation, //TODO Сейчас по умолчанию все маркеры ставлю как "нарушения"
         }
         index++;
@@ -56,15 +60,17 @@ class PlanInstance {
     })
 
     const minMaxCoords = getMarkersCoords(allObjects);
+    const indentCoords = getIndentCoords(minMaxCoords, indent);
     // Предварительный расчёт масштаба
-    const tempScale = getScale(minMaxCoords, this.width, this.height);
-    // Добавочный отступ, чтобы влезали все маркеры
-    const fitOffset = accuracy / tempScale;
-    minMaxCoords.minCoord.x -= fitOffset;
-    minMaxCoords.minCoord.y -= fitOffset;
-    // Уточненный рассчёт массштаба, включая отступы
-    this.scale = getScale(minMaxCoords, this.width, this.height);
-    const { x: minX, y: minY } = minMaxCoords.minCoord;
+    this.scale = getScale(indentCoords, this.width, this.height);
+
+    // // Добавочный отступ, чтобы влезали все маркеры
+    // const fitOffset = accuracy / tempScale;
+    // minMaxCoords.minCoord.x -= fitOffset;
+    // minMaxCoords.minCoord.y -= fitOffset;
+    // // Уточненный рассчёт массштаба, включая отступы
+    // this.scale = getScale(minMaxCoords, this.width, this.height);
+    const { x: minX, y: minY } = indentCoords.minCoord;
     this.offset = {
       x: minX,
       y: minY,
@@ -89,21 +95,21 @@ class PlanInstance {
 
     /** сюда складываем все маркеры + объединённые маркеры */
     const unitedMarkers: IObject[] = [];
-    /** имена обновлённых маркеров */
+    /** id обновлённых маркеров */
     const updatedMarkers: string[] = [];
     allObjects.forEach((object) => {
-      const { coords: srcCoords, name: srcName, color } = object;
+      const { coords: srcCoords, name: srcName, color, id: srcId } = object;
       const { x: srcX, y: srcY } = srcCoords;
       // если маркер уже в обновлённых - идём дальше
-      if (updatedMarkers.includes(srcName)) {
+      if (updatedMarkers.includes(srcId)) {
         return;
       }
       // ищем соседей этого маркера
-      const neighbours = allObjects.filter(({ coords, name}) => {
+      const neighbours = allObjects.filter(({ coords, id }) => {
         const { x, y } = coords;
         const deltaX = Math.abs(srcX - x) * this.scale;
         const deltaY = Math.abs(srcY - y) * this.scale;
-        if (updatedMarkers.includes(name)) {
+        if (updatedMarkers.includes(id)) {
           return false;
         }
         // возвращаем только те элементы, у которых координаты рядом с искомым, конечно учитывая отношение шкалы
@@ -112,13 +118,13 @@ class PlanInstance {
 
       if (neighbours.length === 1) {
         unitedMarkers.push(object);
-        updatedMarkers.push(srcName);
+        updatedMarkers.push(srcId);
       } else {
         neighbours.sort(compareByColor);
         //добавляем объединяющий маркер
-        const pieces = neighbours.map(({ color, name }): IPieceMarker => {
-          updatedMarkers.push(name);
-          return { color, name };
+        const pieces = neighbours.map((piece): IPieceMarker => {
+          updatedMarkers.push(piece.id);
+          return piece;
         });
         const unitedObject: IObject = {
           pieces,
@@ -126,6 +132,7 @@ class PlanInstance {
           coords: srcCoords,
           type: objectType.CombineMarker,
           color,
+          id: srcId,
         };
         unitedMarkers.push(unitedObject);
       }

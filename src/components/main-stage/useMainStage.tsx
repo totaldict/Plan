@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Konva from 'konva';
 import { ImageConfig } from 'konva/lib/shapes/Image';
+import classNames from 'classnames';
 import PlanInstance from '../../containers/plan/core/PlanInstance';
 import { iconColorMap, markerColorMap, objectType, textColorMap } from '../../containers/plan/interfaces/enums';
 import colors from '../../styles/colors';
@@ -8,11 +9,17 @@ import { IComponentPlanProps, ICoords, IObject } from '../../containers/plan/int
 import fonts from '../../styles/fonts';
 import { getContext } from './utils';
 import { getViolationSvg, getInspectionSvg } from '../../assets/icons/svgSource';
+import {ReactComponent as ViolationIcon} from '../../assets/icons/violation.svg'; //вынести иконки в утилиту
+import {ReactComponent as InspectionIcon} from '../../assets/icons/inspection.svg';
 
 //TODO Вынести эти константы в дефолтные настройки
 const textPaddingH = 5;
 const textPaddingV = 3;
 const combineMarkerRadius = 16;
+// расстояние попапа от центра маркера
+const deltaMenu = 28;
+
+const popupPrefix = 'plan-popup';
 
 const markerWithIcons = [objectType.Inspection, objectType.Violation];
 type WithIcons = objectType.Inspection | objectType.Violation;
@@ -24,10 +31,10 @@ const getSvgFunc = {
 
 export const useMainStage = (props: IComponentPlanProps) => {
   const { planId, colorMarkers, planName, planUrl, container } = props;
-  // console.log('container', container);
   // Получаем контекст для измерения текста
   const { family, fontStyle, size, lineHeight } = fonts;
   const context = getContext(fontStyle, size, family);
+
 
   /** Создаёт обычный маркер */
   const createMarker = (marker: IObject, idx: number, scale: number): Konva.Group => {
@@ -130,8 +137,8 @@ export const useMainStage = (props: IComponentPlanProps) => {
   } 
   
   /** Создаёт комбинированный маркер */
-  const createCombineMarker = (marker: IObject, idx: number, scale: number): Konva.Group => {
-    const { coords, pieces } = marker;
+  const createCombineMarker = (marker: IObject, idx: number, scale: number, offset: ICoords): Konva.Group => {
+    const { coords, pieces, id } = marker;
     const { x, y } = coords;
     const scaledX = x * scale;
     const scaledY = y * scale;
@@ -186,15 +193,29 @@ export const useMainStage = (props: IComponentPlanProps) => {
       group.add(arc);
     })
 
-    //TODO Попробовать сделать так же, рендерим менюху в document, а потом просто меняем координату https://konvajs.org/docs/sandbox/Canvas_Context_Menu.html
-    // group.on('mouseover', () => {
-    //   group.getChildren((item) => item.id() === idPlate)[0].setAttr('fill', iconColorMap[color]);
-    //   group.getChildren((item) => item.id() === idPlateText)[0].setAttr('fill', colors.white);
-    // });
-    // group.on('mouseout', () => {
-    //   group.getChildren((item) => item.id() === idPlate)[0].setAttr('fill', colors.white);
-    //   group.getChildren((item) => item.id() === idPlateText)[0].setAttr('fill', textColor);
-    // });
+    const popupNode = document.querySelector(`.${id}_popup`) as HTMLElement;
+    group.on('mouseover', () => {
+      if (!popupNode) {
+        return;
+      }
+      const { height: popupHeight, width: popupWidth } = popupNode.getBoundingClientRect();
+      const targetCenterX = scaledX - offset.x * scale;
+      const targetCenterY = scaledY - offset.y * scale;
+      const popupX = targetCenterX - popupWidth / 2; 
+      const popupY = targetCenterY < (deltaMenu + popupHeight) ? targetCenterY + deltaMenu : targetCenterY - (deltaMenu + popupHeight);
+
+      popupNode.style.opacity = '1';
+      popupNode.style.zIndex = '100';
+      popupNode.style.top = popupY + 'px';
+      popupNode.style.left = popupX + 'px';;
+    });
+    group.on('mouseout', () => {
+      if (!popupNode) {
+        return;
+      }
+      popupNode.style.opacity = '0';
+      popupNode.style.zIndex = '-2';
+    });
     return group;
   }
 
@@ -205,8 +226,8 @@ export const useMainStage = (props: IComponentPlanProps) => {
       return;
     }
     const instance = new PlanInstance(props);
-    const { layerPlan, layerMarkers, stage, objects = [], scale = 1 } = instance;
-    
+    const { layerPlan, layerMarkers, stage, offset, objects = [], scale = 1 } = instance;
+
     Konva.Image.fromURL(`./mock${planUrl}`, (imageNode: Konva.Image) => {
       const imageAttrs: Partial<ImageConfig> = {
         scaleX: scale,
@@ -215,10 +236,11 @@ export const useMainStage = (props: IComponentPlanProps) => {
       imageNode.setAttrs(imageAttrs);
       layerPlan.add(imageNode);
     });
-
     objects.forEach((marker, idx) => {
       const { type } = marker;
-      const markerShape = type === objectType.CombineMarker ? createCombineMarker(marker, idx, scale) : createMarker(marker, idx, scale);
+      const markerShape = type === objectType.CombineMarker
+        ? createCombineMarker(marker, idx, scale, offset)
+        : createMarker(marker, idx, scale);
       layerMarkers.add(markerShape);
     })
 
@@ -230,10 +252,51 @@ export const useMainStage = (props: IComponentPlanProps) => {
     PlanInstance.setStage(stage);
   }
 
-  
+  const iconMap = {
+    [objectType.Violation]: ViolationIcon,
+    [objectType.Inspection]: InspectionIcon,
+    [objectType.CombineMarker]: ViolationIcon, //по умолчанию иконка с violation
+    [objectType.Marker]: ViolationIcon,
+    [objectType.None]: ViolationIcon,
+  }
 
+  const renderPopups = () => {
+    if (!container) {
+      return null;
+    }
+    const { objects } = new PlanInstance(props);
+    const popups = objects.reduce((acc: JSX.Element[], marker) => {
+      const { id, type, pieces } = marker;
+      if (type === objectType.CombineMarker) {
+        const cn = classNames(popupPrefix, `${id}_popup`);
+        const list = (
+          <div className={cn} key={id}>
+            {pieces?.map((piece, idx) => {
+              const IconComponent = iconMap[piece.type];
+              return (
+                <div key={`${piece.id}_${idx}`} className={`${popupPrefix}_piece`}>
+                  <IconComponent className={`${popupPrefix}_icon`}/>
+                  <span className={`${popupPrefix}_name`}>
+                    {piece.name}
+                  </span>
+                </div>)}
+              )
+            }
+          </div>
+        )
+        acc.push(list); 
+      }
+      return acc;
+    }, [])
+    return (
+      <div className={`${popupPrefix}_group`}>
+        {popups.map(popup => popup)}
+      </div>
+    )
+  }
 
   return {
     createMainStage,
+    renderPopups,
   }
 }

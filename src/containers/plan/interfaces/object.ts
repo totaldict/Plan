@@ -1,4 +1,3 @@
-import Konva from 'konva';
 import { Layer } from 'konva/lib/Layer';
 import { Stage } from 'konva/lib/Stage';
 import { colorType, objectType } from './enums';
@@ -7,7 +6,7 @@ interface IPlanContainer {
   container?: HTMLDivElement;
 }
 
-export interface IPlanInstance extends IPlanContainer, Size {
+export interface IPlanInstance extends IPlanContainer, Size, IPlanId {
   stage: Stage;
   layerPlan: Layer;
   layerMarkers: Layer;
@@ -32,15 +31,19 @@ interface IColor {
   color: colorType;
 };
 
+interface IObjectType {
+  type: objectType;
+}
+
 interface ICommonObject {
   name: string;
+  id: string;
 };
 
-export interface IPieceMarker extends IColor, ICommonObject {}
+export interface IPieceMarker extends IColor, ICommonObject, IObjectType {}
 
-export interface IObject extends IColor, ICommonObject {
+export interface IObject extends IColor, ICommonObject, IObjectType {
   coords: ICoords;
-  type: objectType;
   pieces?: IPieceMarker[];
 };
 
@@ -48,8 +51,11 @@ interface IMarkers {
   markers?: ICoords[];
 };
 
-interface ICommonPlanProps {
+interface IPlanId {
   planId: string;
+}
+
+interface ICommonPlanProps extends IPlanId {
   planUrl: string;
   planName: string;
 };
