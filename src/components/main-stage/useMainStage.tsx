@@ -5,19 +5,13 @@ import classNames from 'classnames';
 import PlanInstance from '../../containers/plan/core/PlanInstance';
 import { iconColorMap, markerColorMap, objectType, textColorMap } from '../../containers/plan/interfaces/enums';
 import colors from '../../styles/colors';
-import { IComponentPlanProps, ICoords, IObject } from '../../containers/plan/interfaces/object';
+import { IComponentPlanProps, ICoords, IMinMaxCoords, IObject } from '../../containers/plan/interfaces/object';
 import fonts from '../../styles/fonts';
 import { getContext } from './utils';
 import { getViolationSvg, getInspectionSvg } from '../../assets/icons/svgSource';
 import {ReactComponent as ViolationIcon} from '../../assets/icons/violation.svg'; //вынести иконки в утилиту
 import {ReactComponent as InspectionIcon} from '../../assets/icons/inspection.svg';
-
-//TODO Вынести эти константы в дефолтные настройки
-const textPaddingH = 5;
-const textPaddingV = 3;
-const combineMarkerRadius = 16;
-// расстояние попапа от центра маркера
-const deltaMenu = 28;
+import planConfig from '../../containers/plan/config/planConfig';
 
 const popupPrefix = 'plan-popup';
 
@@ -31,6 +25,7 @@ const getSvgFunc = {
 
 export const useMainStage = (props: IComponentPlanProps) => {
   const { planId, colorMarkers, planName, planUrl, container } = props;
+  const { items: { combineMarkerRadius, deltaMenu, indent }, text: { textPadding } } = planConfig();
   // Получаем контекст для измерения текста
   const { family, fontStyle, size, lineHeight } = fonts;
   const context = getContext(fontStyle, size, family);
@@ -51,7 +46,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
     const iconColor = iconColorMap[color];
     // Рисуем плашку с номером
     const measuredLength = context.measureText(name).width;
-    const plateWidth = textPaddingH * 2 + measuredLength;
+    const plateWidth = textPadding.horizontal * 2 + measuredLength;
     const plate = new Konva.Rect({
       id: idPlate,
       cornerRadius: 2,
@@ -67,11 +62,9 @@ export const useMainStage = (props: IComponentPlanProps) => {
       id: idPlateText,
       text: name,
       x: scaledX - measuredLength / 2,
-      y: scaledY - 40 + 1 + textPaddingV,
+      y: scaledY - 40 + 1 + textPadding.vertical,
       width: measuredLength,
       height: lineHeight,
-      // scaleX: scale,
-      // scaleY: scale,
       align: 'center',
       verticalAlign: 'center',
       wrap: 'none',
@@ -183,8 +176,8 @@ export const useMainStage = (props: IComponentPlanProps) => {
       const arc = new Konva.Arc({
         x: scaledX,
         y: scaledY,
-        innerRadius: 11,
-        outerRadius: 14,
+        innerRadius: combineMarkerRadius - 5,
+        outerRadius: combineMarkerRadius - 2,
         fill: iconColorMap[color],
         angle: pieceAngle,
         rotation: deltaAngle,
@@ -219,35 +212,42 @@ export const useMainStage = (props: IComponentPlanProps) => {
     return group;
   }
 
-  const createMainStage = () => {
-    const devicePixelRatio = window.devicePixelRatio;
-    console.log('devicePixelRatio', devicePixelRatio)
+  const createMainStage = (limitCoords?: IMinMaxCoords) => {
     if (!container) {
       return;
     }
     const instance = new PlanInstance(props);
-    const { layerPlan, layerMarkers, stage, offset, objects = [], scale = 1 } = instance;
-
-    Konva.Image.fromURL(`./mock${planUrl}`, (imageNode: Konva.Image) => {
-      const imageAttrs: Partial<ImageConfig> = {
-        scaleX: scale,
-        scaleY: scale,
-      }
-      imageNode.setAttrs(imageAttrs);
-      layerPlan.add(imageNode);
-    });
+    const { layerPlan, layerMarkers, layerLimit, stage, offset, minMaxCoords, objects = [], scale = 1 } = instance;
+    const { maxCoord: { x: maxX, y: maxY }, minCoord: { x: minX, y: minY } } = limitCoords ?? minMaxCoords;
+    console.log('limitCoords', limitCoords);
+    if (layerPlan.find('#plan-img').length < 1) {
+      Konva.Image.fromURL(`./mock${planUrl}`, (imageNode: Konva.Image) => {
+        const imageAttrs: Partial<ImageConfig> = {
+          id: 'plan-img',
+          scaleX: scale,
+          scaleY: scale,
+        }
+        imageNode.setAttrs(imageAttrs);
+        layerPlan.add(imageNode);
+      });
+    }
+    console.log('qwe')
+    layerMarkers.destroyChildren();
     objects.forEach((marker, idx) => {
-      const { type } = marker;
+      const { type, coords: { x, y } } = marker;
+      const inArea = x < minX / scale || x > maxX / scale || y < minY / scale || y > maxY / scale;
+      if (inArea) {
+        console.log('x', x, 'y', y)
+        return;
+      }
       const markerShape = type === objectType.CombineMarker
         ? createCombineMarker(marker, idx, scale, offset)
         : createMarker(marker, idx, scale);
       layerMarkers.add(markerShape);
     })
 
-    
-
-    // console.log('layer', layerMarkers)
     stage.add(layerPlan);
+    stage.add(layerLimit);
     stage.add(layerMarkers);
     PlanInstance.setStage(stage);
   }

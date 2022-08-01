@@ -1,33 +1,38 @@
-import Konva from "konva";
-import { Layer } from "konva/lib/Layer";
-import { Stage } from "konva/lib/Stage";
-import { objectType } from "../interfaces/enums";
-import { IPlanInstance, IObject, IPieceMarker, IComponentPlanProps, ICoords } from "../interfaces/object";
-import { compareByColor, getIndentCoords, getMarkersCoords, getScale } from "./utils";
-
-//TODO вынести в константы. Точность объединения рядом стоящих маркеров
-const accuracy = 45;
-const panelHeight = 28 + 16 * 2;
-const indent = 75; //отступ по краям полотна для маркеров
+import Konva from 'konva';
+import { Layer } from 'konva/lib/Layer';
+import { Stage } from 'konva/lib/Stage';
+import planConfig from '../config/planConfig';
+import { objectType } from '../interfaces/enums';
+import { IPlanInstance, IObject, IPieceMarker, IComponentPlanProps, ICoords, IMinMaxCoords } from '../interfaces/object';
+import { compareByColor, getIndentCoords, getMarkersCoords, getScale } from './utils';
 
 class PlanInstance {
   container?: HTMLDivElement;
   stage: Stage;
   layerPlan: Layer;
   layerMarkers: Layer;
+  layerLimit: Layer;
   objects: IObject[] = [];
   width?: number;
   height?: number;
   scale = 1;
   offset: ICoords;
   planId: string;
+  minMaxCoords: IMinMaxCoords;
 
   private static instance: IPlanInstance;
   constructor(props: IComponentPlanProps) {
     if (PlanInstance.instance && PlanInstance.instance.planId === props.planId) {
       return PlanInstance.instance;
     }
+    const { items: { accuracy, indent }, panelHeight } = planConfig();
+
     const { container, planId, colorMarkers = [] } = props;
+
+    if (!container) {
+      return;
+    }
+
     this.container = container;
     this.planId = planId;
 
@@ -59,28 +64,15 @@ class PlanInstance {
       })
     })
 
-    const minMaxCoords = getMarkersCoords(allObjects);
-    const indentCoords = getIndentCoords(minMaxCoords, indent);
-    // Предварительный расчёт масштаба
+    this.minMaxCoords = getMarkersCoords(allObjects);
+    const indentCoords = getIndentCoords(this.minMaxCoords, indent);
+    // Рассчёт массштаба, включая отступы
     this.scale = getScale(indentCoords, this.width, this.height);
-
-    // // Добавочный отступ, чтобы влезали все маркеры
-    // const fitOffset = accuracy / tempScale;
-    // minMaxCoords.minCoord.x -= fitOffset;
-    // minMaxCoords.minCoord.y -= fitOffset;
-    // // Уточненный рассчёт массштаба, включая отступы
-    // this.scale = getScale(minMaxCoords, this.width, this.height);
     const { x: minX, y: minY } = indentCoords.minCoord;
     this.offset = {
       x: minX,
       y: minY,
     }
-
-    // this.scale = 1;
-    // this.offset = {
-    //   x: 0,
-    //   y: 0,
-    // }
 
     this.layerPlan = new Konva.Layer({
       id: `${planId}_plan`,
@@ -89,6 +81,11 @@ class PlanInstance {
     });
     this.layerMarkers = new Konva.Layer({
       id: `${planId}_markers`,
+      offsetX: this.offset.x * this.scale,
+      offsetY: this.offset.y * this.scale,
+    });
+    this.layerLimit = new Konva.Layer({
+      id: `${planId}_limit`,
       offsetX: this.offset.x * this.scale,
       offsetY: this.offset.y * this.scale,
     });

@@ -10,11 +10,15 @@ export interface IPlanInstance extends IPlanContainer, Size, IPlanId {
   stage: Stage;
   layerPlan: Layer;
   layerMarkers: Layer;
+  /** Слой для ограничения маркеров */
+  layerLimit: Layer;
   objects: IObject[];
   openCoord?: IOpenCoord;
   scale: number;
   /** Смещение координат, чтобы влезли все маркеры */
   offset: ICoords;
+  /** Минимальная/максимальная координата маркеров */
+  minMaxCoords: IMinMaxCoords;
 };
 
 export interface ICoords {
@@ -77,7 +81,12 @@ export interface Size {
   height?: number;
 }
 
-export interface IComponentPlanProps extends IPlanProps, Partial<Size>, Partial<IPlanContainer> {};
+/** Интерфейс для работы с огранисением области маркеров */
+interface IPlanLimit {
+  limit?: boolean;
+}
+
+export interface IComponentPlanProps extends IPlanProps, Partial<Size>, Partial<IPlanContainer>, IPlanLimit {};
 
 /** Максимальные и минимальные координаты маркеров */
 export interface IMinMaxCoords {

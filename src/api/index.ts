@@ -5,7 +5,6 @@ export const apiMock: IRawPlanProps[] = require('./api.mock.json');
 
 /** Функция получения инфы с бэка */
 export const getInfo = (): IPlanProps[] => {
-  console.log(apiMock)
   let currentId = '';
   const result: IPlanProps[] = [];
   let tempPlan: IPlanProps; 
