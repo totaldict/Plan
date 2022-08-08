@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 interface IPlanConfig {
   items: {
     /** Расстояние попапа от центра маркера */

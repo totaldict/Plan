@@ -57,7 +57,7 @@ class PlanInstance {
           color,
           name: `№ ${index}`,
           id: `id${index}`,
-          type: objectType.Violation, //TODO Сейчас по умолчанию все маркеры ставлю как "нарушения"
+          type: objectType.Violation, // Сейчас по умолчанию все маркеры ставлю как "нарушения"
         }
         index++;
         allObjects.push(newObj);

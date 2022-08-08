@@ -1,14 +1,12 @@
 import * as React from 'react';
-import { useMainStage } from '../../components/main-stage/useMainStage';
+import { useMainStage } from './hooks/useMainStage';
 import { IPlanProps } from './interfaces/object';
-import { ReactComponent as ArrowUp } from '../../assets/icons/arrow-up.svg';
-import { ReactComponent as Limit } from '../../assets/icons/limit.svg';
-import { useLimits } from '../../components/main-stage/useLimits';
+import { useLimits } from './hooks/useLimits';
+import LimitButton from '../../components/LimitButton/LimitButton';
+import PlanPages from '../../components/PlanPages/PlanPages';
 import './Plan.css';
 
 const planCls = 'plan';
-const pagesCls = `${planCls}-pages`;
-const limitCls = `${planCls}-limit`;
 
 interface IProps {
   plans: IPlanProps[];
@@ -28,7 +26,7 @@ const Plan: React.FC<IProps> = ({ plans }): JSX.Element => {
     }
   }, []);
 
-  const { setLimits, limitCoords } = useLimits({...currentProps, limit});
+  const { initLimits, setLimits, limitCoords } = useLimits({...currentProps, limit});
   const { createMainStage, renderPopups } = useMainStage({
     ...currentProps,
     container: container,
@@ -36,22 +34,27 @@ const Plan: React.FC<IProps> = ({ plans }): JSX.Element => {
 
   React.useEffect(() => {
     createMainStage(limitCoords);
-    // document.body.addEventListener('keydown', listener);
-  }, [container, createMainStage, currentPlanIdx, limitCoords])
+  }, [container, createMainStage, limitCoords])
+
+  React.useEffect(() => {
+    initLimits();
+  }, [currentPlanIdx, initLimits])
 
   React.useEffect(() => {
     setLimits();
-  }, [currentProps, limit, container, setLimits])
+  }, [currentProps, limit, container, setLimits, currentPlanIdx])
 
   const handleNextPlan = React.useCallback(() => {
     if (currentPlanIdx < numberOfPlans - 1) {
       setCurrentPlanIdx(currentPlanIdx + 1);
+      setLimit(false);
     }
   }, [currentPlanIdx, numberOfPlans])
  
   const handlePrevPlan = React.useCallback(() => {
     if (currentPlanIdx > 0) {
       setCurrentPlanIdx(currentPlanIdx - 1);
+      setLimit(false);
     }
   }, [currentPlanIdx]);
 
@@ -60,34 +63,12 @@ const Plan: React.FC<IProps> = ({ plans }): JSX.Element => {
   }, [limit]);
 
   const count = React.useMemo(() => `${currentPlanIdx + 1}/${numberOfPlans}`, [currentPlanIdx, numberOfPlans]);
-  // const listener = (event: KeyboardEvent) => {
-  //   move(event?.key as keys);
-  // }
-
-  
 
   return (
     <div className={planCls}>
       <div className={`${planCls}-canvas`} tabIndex={-1} ref={measuredRef} />
-      <button className={limitCls} onClick={handleLimit} >
-        <Limit className={`${limitCls}_icon`} />
-      </button>
-      <div className={pagesCls}>
-        <button className={`${pagesCls}_arrow-left`} onClick={handlePrevPlan}>
-          <ArrowUp className={`${pagesCls}_arrow-icon`} />
-        </button>
-        <div className={`${pagesCls}_current`}>
-          <div className={`${pagesCls}_name`}>
-            {planName}
-          </div>
-          <div className={`${pagesCls}_count`}>
-            {count}
-          </div>
-        </div>
-        <button className={`${pagesCls}_arrow-right`} onClick={handleNextPlan}>
-          <ArrowUp className={`${pagesCls}_arrow-icon`} />
-        </button>
-      </div>
+      <LimitButton onClick={handleLimit} />
+      <PlanPages planName={planName} count={count} onClickNext={handleNextPlan} onClickPrev={handlePrevPlan} />
       {renderPopups()}
     </div>
   );

@@ -3,13 +3,10 @@ import Plan from './containers/plan/Plan';
 import './App.css';
 import { getInfo } from './api';
 
-//TODO Заглушки
+// Заглушки
 const initProps = getInfo();
 
-function App() {
-  // React.useEffect(() => {
-  //   getInfo();
-  // }, [])
+const App = () => {
   return (
     <div className="app">
       <Plan plans={initProps} />

@@ -1,0 +1,31 @@
+.limit-button {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  bottom: 68px;
+  right: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.limit-button_icon {
+  width: 100%;
+  height: 100%;
+}
+
+.limit-button_tooltip {
+  font-family: 'Open Sans, sans-serif';
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.popup-content {
+  background: '#ffffff';
+}
+
+.popup-overlay {
+  background: 'rgba(0,0,0,0.5)';
+}
+
+.popup-arrow {
+  color: '#ffffff';
+}

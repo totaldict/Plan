@@ -2,16 +2,16 @@ import * as React from 'react';
 import Konva from 'konva';
 import { ImageConfig } from 'konva/lib/shapes/Image';
 import classNames from 'classnames';
-import PlanInstance from '../../containers/plan/core/PlanInstance';
-import { iconColorMap, markerColorMap, objectType, textColorMap } from '../../containers/plan/interfaces/enums';
-import colors from '../../styles/colors';
-import { IComponentPlanProps, ICoords, IMinMaxCoords, IObject } from '../../containers/plan/interfaces/object';
-import fonts from '../../styles/fonts';
-import { getContext } from './utils';
-import { getViolationSvg, getInspectionSvg } from '../../assets/icons/svgSource';
-import {ReactComponent as ViolationIcon} from '../../assets/icons/violation.svg'; //вынести иконки в утилиту
-import {ReactComponent as InspectionIcon} from '../../assets/icons/inspection.svg';
-import planConfig from '../../containers/plan/config/planConfig';
+import PlanInstance from '../core/PlanInstance';
+import { iconColorMap, markerColorMap, objectType, textColorMap } from '../interfaces/enums';
+import { IComponentPlanProps, ICoords, IMinMaxCoords, IObject } from '../interfaces/object';
+import colors from '../../../styles/colors';
+import fonts from '../../../styles/fonts';
+import { getContext } from '../core/utils';
+import { getViolationSvg, getInspectionSvg } from '../../../assets/icons/svgSource';
+import {ReactComponent as ViolationIcon} from '../../../assets/icons/violation.svg'; //TODO вынести иконки в утилиту
+import {ReactComponent as InspectionIcon} from '../../../assets/icons/inspection.svg';
+import planConfig from '../config/planConfig';
 
 const popupPrefix = 'plan-popup';
 
@@ -23,9 +23,17 @@ const getSvgFunc = {
   [objectType.Violation]: getViolationSvg,
 }
 
+const iconMap = {
+  [objectType.Violation]: ViolationIcon,
+  [objectType.Inspection]: InspectionIcon,
+  [objectType.CombineMarker]: ViolationIcon, //по умолчанию иконка с violation
+  [objectType.Marker]: ViolationIcon,
+  [objectType.None]: ViolationIcon,
+}
+
 export const useMainStage = (props: IComponentPlanProps) => {
-  const { planId, colorMarkers, planName, planUrl, container } = props;
-  const { items: { combineMarkerRadius, deltaMenu, indent }, text: { textPadding } } = planConfig();
+  const { planUrl, container } = props;
+  const { items: { combineMarkerRadius, deltaMenu }, text: { textPadding } } = planConfig();
   // Получаем контекст для измерения текста
   const { family, fontStyle, size, lineHeight } = fonts;
   const context = getContext(fontStyle, size, family);
@@ -73,9 +81,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
       fontFamily: family,
       lineHeight: 1.1,
       fontStyle: fontStyle,
-      // fontStyle: selected ? selectionFontStyle : fontStyle,
     });
-
     // Рисуем маркер
     const markerShape = new Konva.Shape({
     id: idMarker,
@@ -101,7 +107,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
     group.add(plateText)
     group.add(markerShape)
 
-    // // Рисуем иконку у маркера если она есть
+    // Рисуем иконку у маркера если она есть
     if (markerWithIcons.includes(type)) {
       const getSvg = getSvgFunc[type as WithIcons];
       const iconSvg = getSvg(iconColor);
@@ -117,14 +123,19 @@ export const useMainStage = (props: IComponentPlanProps) => {
         group.add(iconNode);
       });
     }
+
+    const fillPlate = (hover: boolean) => {
+      const plateColor = hover ? iconColorMap[color] : colors.white;
+      const captionColor = hover ? colors.white : textColor;
+      group.getChildren((item) => item.id() === idPlate)[0].setAttr('fill', plateColor);
+      group.getChildren((item) => item.id() === idPlateText)[0].setAttr('fill', captionColor);
+    }
     
     group.on('mouseover', () => {
-      group.getChildren((item) => item.id() === idPlate)[0].setAttr('fill', iconColorMap[color]);
-      group.getChildren((item) => item.id() === idPlateText)[0].setAttr('fill', colors.white);
+      fillPlate(true);
     });
     group.on('mouseout', () => {
-      group.getChildren((item) => item.id() === idPlate)[0].setAttr('fill', colors.white);
-      group.getChildren((item) => item.id() === idPlateText)[0].setAttr('fill', textColor);
+      fillPlate(false);
     });
     return group;
   } 
@@ -135,15 +146,13 @@ export const useMainStage = (props: IComponentPlanProps) => {
     const { x, y } = coords;
     const scaledX = x * scale;
     const scaledY = y * scale;
-    // const scaledFontSize = size * scale;
-    // const scaledLineHeight = lineHeight * scale;
     const piecesCount = pieces?.length ?? 1;
     // Основной круг шейпа
     const circle = new Konva.Circle({
       x: scaledX,
       y: scaledY,
       fill: colors.white,
-      id: `${idx}_circle`, //TODO везде проставить IDшники у всех фигур
+      id: `${idx}_circle`,
       radius: combineMarkerRadius,
       shadowBlur: 5,
     })
@@ -151,6 +160,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
     const markerText = piecesCount.toString();
     const measuredLength = context.measureText(markerText).width;
     const plateText = new Konva.Text({
+      id: `${idx}_text`,
       text: markerText,
       x: scaledX - measuredLength / 2,
       y: scaledY - size / 2,
@@ -191,11 +201,14 @@ export const useMainStage = (props: IComponentPlanProps) => {
       if (!popupNode) {
         return;
       }
+      // вычисляем, куда отобразить попап
       const { height: popupHeight, width: popupWidth } = popupNode.getBoundingClientRect();
       const targetCenterX = scaledX - offset.x * scale;
       const targetCenterY = scaledY - offset.y * scale;
       const popupX = targetCenterX - popupWidth / 2; 
-      const popupY = targetCenterY < (deltaMenu + popupHeight) ? targetCenterY + deltaMenu : targetCenterY - (deltaMenu + popupHeight);
+      const popupY = targetCenterY < (deltaMenu + popupHeight)
+        ? targetCenterY + deltaMenu
+        : targetCenterY - (deltaMenu + popupHeight);
 
       popupNode.style.opacity = '1';
       popupNode.style.zIndex = '100';
@@ -219,7 +232,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
     const instance = new PlanInstance(props);
     const { layerPlan, layerMarkers, layerLimit, stage, offset, minMaxCoords, objects = [], scale = 1 } = instance;
     const { maxCoord: { x: maxX, y: maxY }, minCoord: { x: minX, y: minY } } = limitCoords ?? minMaxCoords;
-    console.log('limitCoords', limitCoords);
+
     if (layerPlan.find('#plan-img').length < 1) {
       Konva.Image.fromURL(`./mock${planUrl}`, (imageNode: Konva.Image) => {
         const imageAttrs: Partial<ImageConfig> = {
@@ -231,13 +244,13 @@ export const useMainStage = (props: IComponentPlanProps) => {
         layerPlan.add(imageNode);
       });
     }
-    console.log('qwe')
     layerMarkers.destroyChildren();
+
     objects.forEach((marker, idx) => {
       const { type, coords: { x, y } } = marker;
-      const inArea = x < minX / scale || x > maxX / scale || y < minY / scale || y > maxY / scale;
-      if (inArea) {
-        console.log('x', x, 'y', y)
+      // Если маркер не входит в обозначенную зону - его не рисуем.
+      const notInArea = x < minX  || x > maxX  || y < minY  || y > maxY ;
+      if (notInArea) {
         return;
       }
       const markerShape = type === objectType.CombineMarker
@@ -252,15 +265,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
     PlanInstance.setStage(stage);
   }
 
-  const iconMap = {
-    [objectType.Violation]: ViolationIcon,
-    [objectType.Inspection]: InspectionIcon,
-    [objectType.CombineMarker]: ViolationIcon, //по умолчанию иконка с violation
-    [objectType.Marker]: ViolationIcon,
-    [objectType.None]: ViolationIcon,
-  }
-
-  const renderPopups = () => {
+  const renderPopups = React.useCallback(() => {
     if (!container) {
       return null;
     }
@@ -293,7 +298,9 @@ export const useMainStage = (props: IComponentPlanProps) => {
         {popups.map(popup => popup)}
       </div>
     )
-  }
+  // тут не надо больше зависимостей
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [container, iconMap, props])
 
   return {
     createMainStage,

@@ -62,3 +62,11 @@ export const getScale = (coords: IMinMaxCoords, width: number, height: number): 
   const scale = Math.min(widthRatio, heightRatio);
   return scale;
 }
+
+/** Функция возвращает контекст текста */
+export const getContext = (fontStyle: string, textSize: number, fontFamily: string): CanvasRenderingContext2D => {
+  const measureCanvas = document.createElement('canvas');
+  const context = measureCanvas.getContext('2d') as CanvasRenderingContext2D;
+  context.font = `${fontStyle || ''} ${textSize}px ${fontFamily}`;
+  return context;
+};

@@ -15,49 +15,6 @@
   overflow: hidden;
 }
 
-.plan-pages {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  background-color: white;
-  height: 28px;
-  margin-top: 16px;
-  margin-bottom: 16px;
-}
-
-.plan-pages_current {
-  display: flex;
-  flex-direction: row;
-  font-family: 'Open Sans, sans-serif';
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.plan-pages_name {
-  margin-right: 20px;
-  color: #23354B;
-}
-
-.plan-pages_count {
-  color: #aeb5bd;
-}
-
-.plan-pages_arrow-left {
-  transform: rotate(180deg);
-  border: none;
-  background-color: white;
-}
-
-.plan-pages_arrow-right {
-  border: none;
-  background-color: white;
-}
-
-.plan-pages_arrow-icon {
-  display: flex;
-}
-
 .popup-content {
   border-radius: 5px;
   padding: 0.5rem;
@@ -104,18 +61,4 @@
 
 .plan-popup_icon {
   margin-right: 12px;
-}
-
-.plan-limit {
-  position: absolute;
-  width: 32px;
-  height: 32px;
-  bottom: 68px;
-  right: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-.plan-limit_icon {
-  width: 100%;
-  height: 100%;
 }

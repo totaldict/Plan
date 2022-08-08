@@ -1,0 +1,43 @@
+.plan-pages {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    height: 28px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .plan-pages_current {
+    display: flex;
+    flex-direction: row;
+    font-family: 'Open Sans, sans-serif';
+    font-weight: 600;
+    font-size: 14px;
+  }
+  
+  .plan-pages_name {
+    margin-right: 20px;
+    color: #23354B;
+  }
+  
+  .plan-pages_count {
+    color: #aeb5bd;
+  }
+  
+  .plan-pages_arrow-left {
+    transform: rotate(180deg);
+    border: none;
+    background-color: white;
+  }
+  
+  .plan-pages_arrow-right {
+    border: none;
+    background-color: white;
+  }
+  
+  .plan-pages_arrow-icon {
+    display: flex;
+  }
+  

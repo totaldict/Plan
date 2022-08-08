@@ -52,5 +52,3 @@ export const textColorMap = {
   [colorType.color4]: '#55AD10',
   [colorType.color5]: '#C90018',
 }
-
-//TODO На ховер текст белый, сама плашка цвета иконки обычной
