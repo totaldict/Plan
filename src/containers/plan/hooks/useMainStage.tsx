@@ -8,32 +8,17 @@ import { IComponentPlanProps, ICoords, IMinMaxCoords, IObject } from '../interfa
 import colors from '../../../styles/colors';
 import fonts from '../../../styles/fonts';
 import { getContext } from '../core/utils';
-import { getViolationSvg, getInspectionSvg } from '../../../assets/icons/svgSource';
-import {ReactComponent as ViolationIcon} from '../../../assets/icons/violation.svg'; //TODO вынести иконки в утилиту
-import {ReactComponent as InspectionIcon} from '../../../assets/icons/inspection.svg';
 import planConfig from '../config/planConfig';
+import { getSvgFunc, iconMap } from '../interfaces/constants';
 
 const popupPrefix = 'plan-popup';
 
 const markerWithIcons = [objectType.Inspection, objectType.Violation];
 type WithIcons = objectType.Inspection | objectType.Violation;
 
-const getSvgFunc = {
-  [objectType.Inspection]: getInspectionSvg,
-  [objectType.Violation]: getViolationSvg,
-}
-
-const iconMap = {
-  [objectType.Violation]: ViolationIcon,
-  [objectType.Inspection]: InspectionIcon,
-  [objectType.CombineMarker]: ViolationIcon, //по умолчанию иконка с violation
-  [objectType.Marker]: ViolationIcon,
-  [objectType.None]: ViolationIcon,
-}
-
 export const useMainStage = (props: IComponentPlanProps) => {
   const { planUrl, container } = props;
-  const { items: { combineMarkerRadius, deltaMenu }, text: { textPadding } } = planConfig();
+  const { items: { combineMarkerRadius, deltaMenu, indent }, text: { textPadding } } = planConfig();
   // Получаем контекст для измерения текста
   const { family, fontStyle, size, lineHeight } = fonts;
   const context = getContext(fontStyle, size, family);
@@ -88,7 +73,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
       x: scaledX,
       y: scaledY,
       fill: markerColor,
-      stroke: '#FFFFFF',
+      stroke: colors.white,
       strokeWidth: 2,
       width: 32,
       height: 42,
@@ -96,7 +81,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
       sceneFunc: function (context, shape) {
         context.beginPath();
         context.arc(0, 0, 15, 0, Math.PI, true);
-        context.bezierCurveTo(-15, 18, 0, 9, 0, 28); //TODO Из переменных брать
+        context.bezierCurveTo(-15, 18, 0, 9, 0, 28);
         context.bezierCurveTo(0, 9, 15, 18, 15, 0);
         context.fillStrokeShape(shape);
       }
@@ -249,7 +234,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
     objects.forEach((marker, idx) => {
       const { type, coords: { x, y } } = marker;
       // Если маркер не входит в обозначенную зону - его не рисуем.
-      const notInArea = x < minX  || x > maxX  || y < minY  || y > maxY ;
+      const notInArea = x < minX  || x > maxX - indent  || y < minY  || y > maxY - indent ;
       if (notInArea) {
         return;
       }

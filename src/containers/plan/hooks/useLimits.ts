@@ -3,6 +3,7 @@ import Konva from 'konva';
 import planConfig from '../config/planConfig';
 import PlanInstance from '../core/PlanInstance';
 import { IComponentPlanProps, IMinMaxCoords } from '../interfaces/object';
+import colors from '../../../styles/colors';
 
 const limitId = 'limitRect';
 
@@ -10,18 +11,23 @@ export const useLimits = (props: IComponentPlanProps) => {
   const { limit } = props;
   const { items: { indent } } = planConfig();
   const instance = new PlanInstance(props);
-  const { minMaxCoords, scale, layerLimit } = instance;
+  const { minMaxCoords, scale, layerLimit, height, width, offset } = instance;
   const [ limitCoords, setLimitCoords ] = React.useState<IMinMaxCoords>();
 
   const initLimits = React.useCallback(() => {
-    setLimitCoords(minMaxCoords);
-  }, [minMaxCoords])
-
-  // React.useEffect(() => { //TODO Посмотреть, может этот эффект теперь не нужен
-  //   if (!limitCoords) {
-  //     initLimits()
-  //   }
-  // }, [initLimits, limit, limitCoords, minMaxCoords])
+    const { maxCoord, minCoord } = minMaxCoords || {};
+    const coords: IMinMaxCoords = {
+      maxCoord: {
+        x: maxCoord?.x + indent,
+        y: maxCoord?.y + indent,
+      },
+      minCoord: {
+        x: minCoord?.x + indent,
+        y: minCoord?.y + indent,
+      }
+    }
+    setLimitCoords(coords);
+  }, [minMaxCoords, indent])
 
   const setLimits = () => {
     if (!limit) {
@@ -36,12 +42,12 @@ export const useLimits = (props: IComponentPlanProps) => {
     }
 
     const limitBackgroundRect = new Konva.Rect({
-      id: 's123',
+      id: `${limitId}_background`,
       x: 0,
       y: 0,
-      width: 3000,
-      height: 3000,
-      fill: '#000000',
+      width: (width ?? 0) + offset.x,
+      height: (height ?? 0) + offset.y,
+      fill: colors.black,
       opacity: 0.80,
       draggable: false,
     });
@@ -49,24 +55,23 @@ export const useLimits = (props: IComponentPlanProps) => {
     const { maxCoord, minCoord } = limitCoords;
     const limitRect = new Konva.Rect({
       id: limitId,
-      x: (minCoord.x + indent) * scale,
-      y: (minCoord.y + indent) * scale,
+      x: (minCoord.x) * scale,
+      y: (minCoord.y) * scale,
       width: (maxCoord.x - minCoord.x - indent) * scale,
       height: (maxCoord.y - minCoord.y - indent) * scale,
-      fill: '#000000',
+      fill: colors.black,
       draggable: true,
       globalCompositeOperation: 'xor',
     });
 
     const updateLimitCoords = () => {
-      // const newMinCoord = limitRect.position();
       const newMinCoord = {
         x: limitRect.x() / scale,
         y: limitRect.y() / scale,
       }
       const newMaxCoord = {
-        x: newMinCoord.x + limitRect.scaleX() * limitRect.width() / scale,
-        y: newMinCoord.y + limitRect.scaleY() * limitRect.height() / scale,
+        x: newMinCoord.x + indent + limitRect.scaleX() * limitRect.width() / scale,
+        y: newMinCoord.y + indent + limitRect.scaleY() * limitRect.height() / scale,
       }
       setLimitCoords({
         minCoord: newMinCoord,

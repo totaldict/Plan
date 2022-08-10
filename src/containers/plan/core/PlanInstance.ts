@@ -136,31 +136,14 @@ class PlanInstance {
 
     })
     
-    // console.log('unitedMarkers', unitedMarkers);
     this.objects = unitedMarkers;
     PlanInstance.instance = this;
     return PlanInstance.instance;
   }
 
-  // static staticMethod() {
-  //   return 'staticMethod';
-  // }
-
-  // get stage() {
-  //   return this.stage;
-  // }
-
   static setStage(value: Stage) {
     this.instance.stage = value;
   }
-
-  // get layer() {
-  //   return this.layer;
-  // }
-
-  // static setHeroCoord(value: IBlockCoord) {
-  //   this.instance.heroCoord = value;
-  // }
 }
 
 export default PlanInstance;
