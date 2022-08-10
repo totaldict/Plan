@@ -4,6 +4,6 @@ const colors = {
   white: '#FFFFFF',
   dark: '#172A41',
   black: '#000000',
-}
+};
 
 export default colors;

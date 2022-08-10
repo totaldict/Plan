@@ -1,5 +1,5 @@
-import { colorType } from "../containers/plan/interfaces/enums";
-import { IColorMarker, IPlanProps, IRawPlanProps } from "../containers/plan/interfaces/object";
+import { colorType } from '../containers/plan/interfaces/enums';
+import { IColorMarker, IPlanProps, IRawPlanProps } from '../containers/plan/interfaces/object';
 
 export const apiMock: IRawPlanProps[] = require('./api.mock.json');
 
@@ -7,7 +7,7 @@ export const apiMock: IRawPlanProps[] = require('./api.mock.json');
 export const getInfo = (): IPlanProps[] => {
   let currentId = '';
   const result: IPlanProps[] = [];
-  let tempPlan: IPlanProps; 
+  let tempPlan: IPlanProps;
   const colorTypeByIdx = Object.values(colorType);
   apiMock.forEach((item, idx) => {
     const { planId, markers, planName, planUrl } = item;
@@ -15,8 +15,8 @@ export const getInfo = (): IPlanProps[] => {
     if (planId !== currentId && idx !== 0) {
       result.push({ ...tempPlan });
       tempPlan.colorMarkers = [];
-    };
-    
+    }
+
     currentId = planId;
     const color = colorTypeByIdx[colorTypeByIdx.length > idx ? idx : 0];
     const colorMarker: IColorMarker = {
@@ -30,12 +30,11 @@ export const getInfo = (): IPlanProps[] => {
       planName,
       planUrl,
       colorMarkers,
-    }
+    };
     // последний добавляем в любом случае в коллекцию
     if (idx === apiMock.length - 1) {
       result.push(tempPlan);
     }
-    
-  })
+  });
   return result;
-}
+};

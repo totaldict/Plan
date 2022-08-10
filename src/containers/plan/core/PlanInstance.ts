@@ -58,11 +58,11 @@ class PlanInstance {
           name: `№ ${index}`,
           id: `id${index}`,
           type: objectType.Violation, // Сейчас по умолчанию все маркеры ставлю как "нарушения"
-        }
+        };
         index++;
         allObjects.push(newObj);
-      })
-    })
+      });
+    });
 
     this.minMaxCoords = getMarkersCoords(allObjects);
     const indentCoords = getIndentCoords(this.minMaxCoords, indent);
@@ -72,7 +72,7 @@ class PlanInstance {
     this.offset = {
       x: minX,
       y: minY,
-    }
+    };
 
     this.layerPlan = new Konva.Layer({
       id: `${planId}_plan`,
@@ -111,7 +111,7 @@ class PlanInstance {
         }
         // возвращаем только те элементы, у которых координаты рядом с искомым, конечно учитывая отношение шкалы
         return deltaX < accuracy && deltaY < accuracy;
-      })
+      });
 
       if (neighbours.length === 1) {
         unitedMarkers.push(object);
@@ -133,9 +133,8 @@ class PlanInstance {
         };
         unitedMarkers.push(unitedObject);
       }
+    });
 
-    })
-    
     this.objects = unitedMarkers;
     PlanInstance.instance = this;
     return PlanInstance.instance;

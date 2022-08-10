@@ -25,9 +25,9 @@ export const useLimits = (props: IComponentPlanProps) => {
         x: minCoord?.x + indent,
         y: minCoord?.y + indent,
       }
-    }
+    };
     setLimitCoords(coords);
-  }, [minMaxCoords, indent])
+  }, [minMaxCoords, indent]);
 
   const setLimits = () => {
     if (!limit) {
@@ -68,16 +68,16 @@ export const useLimits = (props: IComponentPlanProps) => {
       const newMinCoord = {
         x: limitRect.x() / scale,
         y: limitRect.y() / scale,
-      }
+      };
       const newMaxCoord = {
         x: newMinCoord.x + indent + limitRect.scaleX() * limitRect.width() / scale,
         y: newMinCoord.y + indent + limitRect.scaleY() * limitRect.height() / scale,
-      }
+      };
       setLimitCoords({
         minCoord: newMinCoord,
         maxCoord: newMaxCoord,
-      })
-    }
+      });
+    };
 
     limitRect.on('transformend', function () {
       updateLimitCoords();
@@ -94,11 +94,11 @@ export const useLimits = (props: IComponentPlanProps) => {
     });
     transformer.nodes([limitRect]);
     layerLimit.add(transformer);
-  }
-  
+  };
+
   return {
     initLimits,
     setLimits,
     limitCoords,
-  }
-}
+  };
+};

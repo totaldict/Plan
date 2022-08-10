@@ -1,4 +1,4 @@
-import { ICoords, IMinMaxCoords, IObject } from "../interfaces/object";
+import { ICoords, IMinMaxCoords, IObject } from '../interfaces/object';
 
 export const compareByColor = (a: IObject, b: IObject) => {
   if (a.color > b.color) {
@@ -8,7 +8,7 @@ export const compareByColor = (a: IObject, b: IObject) => {
     return -1;
   }
   return 0;
-}
+};
 
 /**
  * Получение максимальноых и минимальных координат маркеров
@@ -32,9 +32,9 @@ export const getMarkersCoords = (objects: IObject[]): IMinMaxCoords => {
     if (!minCoord.y || y < minCoord.y) {
       minCoord.y = y;
     }
-  })
+  });
   return { minCoord, maxCoord };
-}
+};
 
 /** Получение крайних координат с учётом отступа по краям */
 export const getIndentCoords = (coords: IMinMaxCoords, indent: number): IMinMaxCoords => {
@@ -44,7 +44,7 @@ export const getIndentCoords = (coords: IMinMaxCoords, indent: number): IMinMaxC
   minCoord.x = minCoord.x - indent;
   minCoord.y = minCoord.y - indent;
   return { maxCoord, minCoord };
-}
+};
 
 /**
  * Рассчитывает соотношение области окна к области, на которой присутствуют маркеры по координатам.
@@ -61,7 +61,7 @@ export const getScale = (coords: IMinMaxCoords, width: number, height: number): 
   const heightRatio = height / markersHeight;
   const scale = Math.min(widthRatio, heightRatio);
   return scale;
-}
+};
 
 /** Функция возвращает контекст текста */
 export const getContext = (fontStyle: string, textSize: number, fontFamily: string): CanvasRenderingContext2D => {

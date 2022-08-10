@@ -29,7 +29,7 @@ const PlanPages: React.FC<IProps> = ({ planName, count, onClickNext, onClickPrev
         <ArrowUp className={`${pagesCls}_arrow-icon`} />
       </button>
     </div>
-  )
-}
+  );
+};
 
 export default PlanPages;

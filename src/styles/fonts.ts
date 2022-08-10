@@ -4,6 +4,5 @@ const font = {
     fontStyle: '600',
     lineHeight: 13,
   };
-  
-  export default font;
-  
+
+export default font;

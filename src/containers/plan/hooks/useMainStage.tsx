@@ -49,7 +49,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
       width: plateWidth,
       shadowBlur: 5,
       fill: colors.white,
-    })
+    });
     // Рисуем текст на плашку
     const plateText = new Konva.Text({
       id: idPlateText,
@@ -78,26 +78,26 @@ export const useMainStage = (props: IComponentPlanProps) => {
       width: 32,
       height: 42,
       shadowBlur: 5,
-      sceneFunc: function (context, shape) {
-        context.beginPath();
-        context.arc(0, 0, 15, 0, Math.PI, true);
-        context.bezierCurveTo(-15, 18, 0, 9, 0, 28);
-        context.bezierCurveTo(0, 9, 15, 18, 15, 0);
-        context.fillStrokeShape(shape);
+      sceneFunc: function (shapeContext, shape) {
+        shapeContext.beginPath();
+        shapeContext.arc(0, 0, 15, 0, Math.PI, true);
+        shapeContext.bezierCurveTo(-15, 18, 0, 9, 0, 28);
+        shapeContext.bezierCurveTo(0, 9, 15, 18, 15, 0);
+        shapeContext.fillStrokeShape(shape);
       }
     });
 
     const group = new Konva.Group();
-    group.add(plate)
-    group.add(plateText)
-    group.add(markerShape)
+    group.add(plate);
+    group.add(plateText);
+    group.add(markerShape);
 
     // Рисуем иконку у маркера если она есть
     if (markerWithIcons.includes(type)) {
       const getSvg = getSvgFunc[type as WithIcons];
       const iconSvg = getSvg(iconColor);
       const iconUrl = 'data:image/svg+xml;base64,' + window.btoa(iconSvg);
-  
+
       Konva.Image.fromURL(iconUrl, (iconNode: Konva.Image) => {
         iconNode.setAttrs({
           x: scaledX - 10,
@@ -114,8 +114,8 @@ export const useMainStage = (props: IComponentPlanProps) => {
       const captionColor = hover ? colors.white : textColor;
       group.getChildren((item) => item.id() === idPlate)[0].setAttr('fill', plateColor);
       group.getChildren((item) => item.id() === idPlateText)[0].setAttr('fill', captionColor);
-    }
-    
+    };
+
     group.on('mouseover', () => {
       fillPlate(true);
     });
@@ -123,8 +123,8 @@ export const useMainStage = (props: IComponentPlanProps) => {
       fillPlate(false);
     });
     return group;
-  } 
-  
+  };
+
   /** Создаёт комбинированный маркер */
   const createCombineMarker = (marker: IObject, idx: number, scale: number, offset: ICoords): Konva.Group => {
     const { coords, pieces, id } = marker;
@@ -140,7 +140,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
       id: `${idx}_circle`,
       radius: combineMarkerRadius,
       shadowBlur: 5,
-    })
+    });
     // Текст с количеством объединенных маркеров
     const markerText = piecesCount.toString();
     const measuredLength = context.measureText(markerText).width;
@@ -179,7 +179,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
       });
       deltaAngle += pieceAngle;
       group.add(arc);
-    })
+    });
 
     const popupNode = document.querySelector(`.${id}_popup`) as HTMLElement;
     group.on('mouseover', () => {
@@ -190,7 +190,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
       const { height: popupHeight, width: popupWidth } = popupNode.getBoundingClientRect();
       const targetCenterX = scaledX - offset.x * scale;
       const targetCenterY = scaledY - offset.y * scale;
-      const popupX = targetCenterX - popupWidth / 2; 
+      const popupX = targetCenterX - popupWidth / 2;
       const popupY = targetCenterY < (deltaMenu + popupHeight)
         ? targetCenterY + deltaMenu
         : targetCenterY - (deltaMenu + popupHeight);
@@ -198,7 +198,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
       popupNode.style.opacity = '1';
       popupNode.style.zIndex = '100';
       popupNode.style.top = popupY + 'px';
-      popupNode.style.left = popupX + 'px';;
+      popupNode.style.left = popupX + 'px';
     });
     group.on('mouseout', () => {
       if (!popupNode) {
@@ -208,7 +208,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
       popupNode.style.zIndex = '-2';
     });
     return group;
-  }
+  };
 
   const createMainStage = (limitCoords?: IMinMaxCoords) => {
     if (!container) {
@@ -224,7 +224,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
           id: 'plan-img',
           scaleX: scale,
           scaleY: scale,
-        }
+        };
         imageNode.setAttrs(imageAttrs);
         layerPlan.add(imageNode);
       });
@@ -234,7 +234,7 @@ export const useMainStage = (props: IComponentPlanProps) => {
     objects.forEach((marker, idx) => {
       const { type, coords: { x, y } } = marker;
       // Если маркер не входит в обозначенную зону - его не рисуем.
-      const notInArea = x < minX  || x > maxX - indent  || y < minY  || y > maxY - indent ;
+      const notInArea = x < minX  || x > maxX - indent  || y < minY  || y > maxY - indent;
       if (notInArea) {
         return;
       }
@@ -242,13 +242,13 @@ export const useMainStage = (props: IComponentPlanProps) => {
         ? createCombineMarker(marker, idx, scale, offset)
         : createMarker(marker, idx, scale);
       layerMarkers.add(markerShape);
-    })
+    });
 
     stage.add(layerPlan);
     stage.add(layerLimit);
     stage.add(layerMarkers);
     PlanInstance.setStage(stage);
-  }
+  };
 
   const renderPopups = React.useCallback(() => {
     if (!container) {
@@ -269,26 +269,24 @@ export const useMainStage = (props: IComponentPlanProps) => {
                   <span className={`${popupPrefix}_name`}>
                     {piece.name}
                   </span>
-                </div>)}
-              )
+                </div>);
+              })
             }
           </div>
-        )
-        acc.push(list); 
+        );
+        acc.push(list);
       }
       return acc;
-    }, [])
+    }, []);
     return (
       <div className={`${popupPrefix}_group`}>
         {popups.map(popup => popup)}
       </div>
-    )
-  // тут не надо больше зависимостей
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [container, iconMap, props])
+    );
+  }, [container, iconMap, props]);
 
   return {
     createMainStage,
     renderPopups,
-  }
-}
+  };
+};

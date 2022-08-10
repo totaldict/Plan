@@ -12,6 +12,6 @@ const App = () => {
       <Plan plans={initProps} />
     </div>
   );
-}
+};
 
 export default App;

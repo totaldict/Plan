@@ -22,7 +22,7 @@ const LimitButton: React.FC<IProps> = ({ onClick }) => {
     >
       <span className={`${limitCls}_tooltip`}>Ограничение области</span>
     </Popup>
-  )
-}
+  );
+};
 
 export default LimitButton;

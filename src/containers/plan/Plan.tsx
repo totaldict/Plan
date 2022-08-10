@@ -34,23 +34,23 @@ const Plan: React.FC<IProps> = ({ plans }): JSX.Element => {
 
   React.useEffect(() => {
     createMainStage(limitCoords);
-  }, [container, createMainStage, limitCoords])
+  }, [container, createMainStage, limitCoords]);
 
   React.useEffect(() => {
     initLimits();
-  }, [currentPlanIdx, initLimits])
+  }, [currentPlanIdx, initLimits]);
 
   React.useEffect(() => {
     setLimits();
-  }, [currentProps, limit, container, setLimits, currentPlanIdx])
+  }, [currentProps, limit, container, setLimits, currentPlanIdx]);
 
   const handleNextPlan = React.useCallback(() => {
     if (currentPlanIdx < numberOfPlans - 1) {
       setCurrentPlanIdx(currentPlanIdx + 1);
       setLimit(false);
     }
-  }, [currentPlanIdx, numberOfPlans])
- 
+  }, [currentPlanIdx, numberOfPlans]);
+
   const handlePrevPlan = React.useCallback(() => {
     if (currentPlanIdx > 0) {
       setCurrentPlanIdx(currentPlanIdx - 1);
@@ -72,6 +72,6 @@ const Plan: React.FC<IProps> = ({ plans }): JSX.Element => {
       {renderPopups()}
     </div>
   );
-}
+};
 
 export default Plan;
